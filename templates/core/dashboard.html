@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard | VentAl{% endblock %}
+
+{% block css %}
+  
+  #username {
+    margin-right: 12px;
+    padding-right: 0px;
+  }
+
+{% endblock %}
+
+
+
+{% block content %}
+
+{% include 'core/navbar.html' %}
+
+<div class="container">
+<h1 class="m-4 display-1">Dashboard</h1>
+<span><h4 class="mx-4 mt-4">Storage used: {{ storage_used }} MB</h4></span>
+
+<hr>
+
+<h2 class="m-4"><b>My Albums</b></h2>
+<a class="btn btn-primary mx-4" href="/stage/new"><i class="fa-solid fa-images px-2"></i>Create new</a>
+
+<div class="row justify-content-around mt-4">
+{% for x,y,z in album_array %}
+<div class="card px-0 mx-1 my-3 col-md-3 col-10">
+    <img src="{{ z }}" class="card-img-top">
+    <div class="card-body">
+    <h5 class="card-title"><a href="/stage/{{ x }}">{{ y }}</a></h5>
+    </div>
+</div>
+{% endfor %}
+</div>
+
+
+</div>
+
+
+{% endblock %}

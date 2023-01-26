@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block title %} {{ album_name }} Album {% endblock %}
+
+{% block css %}
+  
+  #username {
+    margin-right: 12px;
+    padding-right: 0px;
+  }
+  .card-img-top {
+    width: 100%;
+    height: 20vh;
+    object-fit: cover;
+    }
+
+{% endblock %}
+
+
+
+{% block content %}
+
+{% include 'core/navbar.html' %}
+
+
+
+<div class="container">
+    <span class="d-none" id="albumNameHidden">{{ album_name }}</span>
+    <form method="POST" enctype="multipart/form-data" class="my-4">
+        {% csrf_token %}
+        {{ name_form }}
+        <button name="nameChangeBtn" class="btn btn-primary" type="submit">Ok</button>
+    </form>
+
+    <hr>
+
+    <h4 class="my-3">Pin: <span class="badge rounded-pill bg-success">{{ album_pin }}</span></h4>
+
+    <h4>Share URL of album: <a id="albumShareURL" href="/album/{{ album_ref_id }}">/album/{{ album_ref_id }}</a><button data-bs-toggle="tooltip" title="Copy to clipboard" class="btn ms-3" onclick="copyToClipboard()"><i class="fa-regular fa-copy"></i></button><button data-bs-toggle="tooltip" title="Share on Whatsapp" class="btn ms-1" onclick="shareOnWA()"><i class="fa-brands fa-whatsapp"></i></button></h4>
+    
+
+    <button class="btn btn-danger mt-5" onclick="deleteAlbum()"><i class="fa-solid fa-trash px-2"></i>Delete Album</button>
+
+    <hr>
+
+    <form method="POST" enctype="multipart/form-data">
+        <img src="{{ cover_img_url }}" class="img-fluid my-3" alt="Cover Image">
+        {% csrf_token %}
+        {{ coverImg_form.as_p }}
+        <button name="coverImgUploadBtn" class="btn btn-primary" type="submit">Change</button>
+    </form>
+
+    <hr>
+
+    <h4 class="my-3 display-4">Images</h4>
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ img_form.as_p }}
+        <button name="imgUploadBtn" class="btn btn-primary" type="submit">Upload</button>
+    </form>
+
+    <div class="row justify-content-around mt-4">
+    {% for img in image_urls %}
+        <div class="card px-0 mx-1 my-3 col-md-3 col-10">
+            <img src="{{ img.view }}" class="card-img-top" loading="lazy" onclick="enlargeImg(this)">
+            <div class="card-body">
+                <p class="card-text">Size: {{ img.size }} KB</p>
+                <a href="{{ img.delete }}" class="btn btn-outline-danger">Delete</a>
+            </div>
+        </div>
+    {% endfor %}
+    </div>
+
+</div>
+
+<div id="imgEnlargeModal" class="modal fade text-center">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-body">
+        <img id="img01" class="img-fluid">
+      </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+    </div>
+  </div>
+</div>
+
+
+{% endblock %}
+
+{% block js %}
+  
+  <script>
+    // function to enlarge image on click
+    function enlargeImg(img) {
+      var modal = new bootstrap.Modal(document.getElementById("imgEnlargeModal"), {});
+      var modalImg = document.getElementById("img01");
+      modalImg.src = img.src;
+      modal.show();
+    }
+    // function to confirm album deletion
+    function deleteAlbum() {
+      var confirmDelete = confirm("Are you sure you want to delete this album?");
+      if (confirmDelete) {
+        window.location.href = "/delete/album/{{ username }}/{{ album_id }}";
+      }
+    }
+    function copyToClipboard() {
+      var albumURL = document.getElementById("albumShareURL").href;
+      navigator.clipboard.writeText(albumURL);
+
+      var btn = document.querySelector(".fa-copy");
+      btn.classList.remove("fa-copy");
+      btn.classList.add("fa-check");
+      btn.classList.add("fa-solid");
+      btn.classList.add("text-success");
+
+      setTimeout(() => {
+        btn.classList.remove("fa-check");
+        btn.classList.remove("fa-solid");
+        btn.classList.remove("text-success");
+        btn.classList.add("fa-copy");
+      }, 1000);
+    }
+    function shareOnWA() {
+      var albumURL = document.getElementById("albumShareURL").href;
+      var albumName = document.getElementById("albumNameHidden").innerText;
+      var text = "Hey, check out this album: " + albumName + " on VentAl.\n\n"+ albumURL + "\n\n The album is password protected. You can access it by entering the pin: {{ album_pin }}";
+      var waURL = "https://wa.me/?text=" + text;
+      window.open(waURL, "_blank");
+    }
+
+  </script>
+
+{% endblock %}

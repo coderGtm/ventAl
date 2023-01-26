@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+
+{% block title %} {{ album_name }} Album {% endblock %}
+
+{% block css %}
+  
+  .card-img-top {
+    width: 100%;
+    height: 20vh;
+    object-fit: cover;
+    }
+  #userImagesDivBase {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: white;
+  }
+  #UploadPreview {
+    max-height: 30vh;
+  }
+  #userImagesDiv {
+    display: none;
+    overflow-y: scroll;
+    max-height: 100%;
+  }
+  #userImageDivFooter {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+  }
+  #userImgSpinner {
+    display: block;
+  }
+  #faceNotMatchedAlert {
+    display: none;
+  }
+
+{% endblock %}
+
+{% block content %} 
+
+{% if authorized == False %}
+    <div class="container">
+        <h1 class="display-1">{{ album_name }} Album</h1>
+        <img src="{{ cover_img_url }}" alt="{{ album_name }} Cover Image" class="img-fluid my-3">
+        <hr>
+        <form method="POST" enctype="multipart/form-data" class="my-3">
+            {% csrf_token %}
+            <div class="alert alert-primary"><b>You need to enter the Album PIN to enjoy this album!</b></div>
+            {{ pin_form.as_p }}
+            <button name="pinSubmitBtn" class="btn btn-primary" type="submit"><i class="fa-solid fa-lock-open me-2"></i>Unlock</button>
+            <p>Don't have a PIN? Contact the Album owner to get it.</p>
+        </form>
+    </div>
+{% else %}
+
+    <div id="normalAlbum" class="container">
+        
+        <h1 class="display-1">{{ album_name }} Album</h1>
+        <img src="{{ cover_img_url }}" alt="{{ album_name }} Cover Image" class="img-fluid my-3">
+        <hr>
+        <button id="findUserImagesBtn" class="btn btn-warning" onclick="findUserImages()"><i class="fa-solid fa-circle-user px-2"></i>Find my Images</button>
+        <div class="row justify-content-around mt-4">
+        {% for img in image_urls %}
+            <div class="card px-0 mx-1 my-3 col-md-3 col-10">
+                <img src="{{ img.view }}" class="card-img-top" onclick="enlargeImg(this)" crossorigin="anonymous">
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+
+    <div id="imgEnlargeModal" class="modal fade text-center">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-body">
+              <img id="img01" class="img-fluid">
+            </div>
+      
+              <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="webcamModal" class="modal fade text-center" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Capture Image</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="closeWebcam()"></button>
+            </div>
+            <div class="modal-body">
+              <div id="camera" class="mx-auto"></div>
+            </div>
+      
+              <div class="modal-footer">
+                  <button type="button" class="btn btn-warning mx-auto" data-bs-dismiss="modal" onclick="captureImage()"><i class="fa-solid fa-camera px-2"></i>Capture</button>
+              </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="userImagesDivBase">
+
+        <div id="imageInputDiv" class="container text-center py-5">
+          <h3>Capture or upload an image of your face</h3>
+          <div id="uploadPreviewDiv" class="container mt-4">
+            <img id="UploadPreview" class="img-fluid" />
+          </div>
+          <div id="uploadOptions" class="container">
+            <button onclick="openWebcamModal()" class="btn btn-outline-primary mx-auto my-3">Capture Image</button>
+            <p>or Browse from your device:</p>
+            <input type="file" id="imageInput" accept="image/*" class="btn btn-outline-secondary form-control mx-auto my-2" onchange="loadImageUploadPreview(event)" />
+          </div>
+          <br>
+          <button onclick="useImage()" class="btn btn-primary mx-auto" id="useBtn">Use this Image</button>
+        </div>
+
+        <div id="userImagesDiv" class="container p-3 mt-2 mb-5">
+          <h1 class="display-1">Your Images</h1>
+          <div id="userImgRow" class="row justify-content-around mt-4 mb-5"></div>
+          <img src="https://upload.wikimedia.org/wikipedia/commons/d/de/Ajax-loader.gif" id="userImgSpinner" class="mx-auto">
+          <div class="alert alert-dark" id="faceNotMatchedAlert">It seems as if your face is not present in any of the images in the album. Please try again with a different image.</div>
+        </div>
+
+        <div id="userImageDivFooter" class="container-fluid text-center bg-dark p-3">
+          <button class="btn btn-danger" onclick="closeUserImagesDiv()"><i class="fa-solid fa-xmark px-2"></i>Close</button>
+          <button class="btn btn-outline-success" onclick="closeUserImagesDiv();findUserImages();"><i class="fa-solid fa-rotate-left px-2"></i>Try again</button>
+        </div>
+
+      </div>
+
+{% endif %}
+
+
+
+{% endblock %}
+
+{% block js %}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/webcamjs/1.0.26/webcam.min.js" integrity="sha512-dQIiHSl2hr3NWKKLycPndtpbh5iaHLo6MwrXm7F0FM5e+kL2U16oE9uIwPHUl6fQBeCthiEuV/rzP3MiAB8Vfw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdn.jsdelivr.net/gh/cgarciagl/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <script>
+    // function to enlarge image on click
+    function enlargeImg(img) {
+      var modal = new bootstrap.Modal(document.getElementById("imgEnlargeModal"), {});
+      var modalImg = document.getElementById("img01");
+      modalImg.src = img.src;
+      modal.show();
+    }
+    function findUserImages() {
+      document.getElementById("userImagesDivBase").style.display = "block";
+      document.getElementById("userImagesDiv").style.display = "none";
+      document.getElementById("imageInputDiv").style.display = "block";
+      document.getElementById("uploadOptions").style.display = "block";
+      document.getElementById("useBtn").style.display = "none";
+    }
+    // function to preview uploaded user image
+    var loadImageUploadPreview = function(event) {
+    var output = document.getElementById('UploadPreview');
+    output.src = URL.createObjectURL(event.target.files[0]);
+    output.onload = function() {
+      URL.revokeObjectURL(output.src) // free memory
+      document.getElementById("uploadOptions").style.display = "none";
+      document.getElementById("useBtn").style.display = "block";
+    }
+  };
+  function closeUserImagesDiv() {
+    document.getElementById("userImagesDivBase").style.display = "none";
+    document.getElementById("imageInput").value = "";
+    document.getElementById("UploadPreview").src = "";
+    document.getElementById("userImgRow").innerHTML = "";
+    document.getElementById("userImgSpinner").style.display = "block";
+    document.getElementById("faceNotMatchedAlert").style.display = "none";
+  }
+  async function useImage() {
+    if (document.getElementById("UploadPreview").src == "") {
+      alert("Please upload an image first!");
+      return;
+    }
+    if (modelsLoaded == false) {
+      alert("Please wait while the ML models are being loaded! Try again after a few seconds.");
+      return;
+    }
+    const imageInput = document.getElementById("UploadPreview");
+    // detect face in image
+    useTinyModel = true
+    const detection = await faceapi.detectSingleFace(imageInput, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks(useTinyModel).withFaceDescriptor();
+    //console.log(detection);
+    // if face is detected
+    if (detection) {
+      // ui changes
+      document.getElementById("imageInputDiv").style.display = "none";
+      document.getElementById("userImagesDiv").style.display = "block";
+      // create facematcher
+      const faceMatcher = new faceapi.FaceMatcher(detection);
+      // loop through all images in album
+      var images = document.querySelectorAll(".card-img-top");
+      var noFaceMatched = true;
+      for (var i = 0; i < images.length; i++) {
+        var detectedFaces = await faceapi.detectAllFaces(images[i], new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks(useTinyModel).withFaceDescriptors();
+        var imgAdded = false;
+        detectedFaces.forEach(fd => {
+          const bestMatch = faceMatcher.findBestMatch(fd.descriptor)
+          console.log(bestMatch)
+          if (bestMatch._label == "person 1") {
+            var imgHref = images[i].src;
+            var imgDiv = document.createElement("div");
+            imgDiv.className = "card px-0 mx-1 my-3 col-md-3 col-10";
+            imgDiv.innerHTML = `<img src="${imgHref}" class="card-img-top" onclick="enlargeImg(this)">`;
+            document.getElementById("userImgRow").appendChild(imgDiv);
+            imgAdded = true;
+            noFaceMatched = false;
+            return;
+          }
+        }
+        );
+      }
+      document.getElementById("userImgSpinner").style.display = "none";
+      if (noFaceMatched) {
+        document.getElementById("faceNotMatchedAlert").style.display = "block";
+      }
+    }
+    else {
+      alert("No face detected in image! Please try again with a clear picture of your face.");
+    }
+  }
+  function setWebcam() {
+    Webcam.set({
+      width: 320,
+      height: 240,
+      image_format: 'jpeg',
+      jpeg_quality: 100
+    });
+    Webcam.attach('#camera');
+  }
+  function openWebcamModal() {
+    var modal = new bootstrap.Modal(document.getElementById("webcamModal"), {});
+    modal.show();
+    setWebcam();
+  }
+  function captureImage() {
+    Webcam.snap(function(data_uri) {
+      document.getElementById("UploadPreview").src = data_uri;
+      document.getElementById("uploadOptions").style.display = "none";
+      document.getElementById("useBtn").style.display = "block";
+      closeWebcam();
+    });
+  }
+  function closeWebcam() {
+    Webcam.reset();
+  }
+  async function loadModels() {
+    const MODEL_URL = "https://cdn.jsdelivr.net/gh/cgarciagl/face-api.js@0.22.2/weights/";
+    await faceapi.loadTinyFaceDetectorModel(MODEL_URL);
+    await faceapi.loadFaceLandmarkTinyModel(MODEL_URL);
+    await faceapi.loadFaceRecognitionModel(MODEL_URL);
+    modelsLoaded = true;
+  }
+  modelsLoaded = false;
+  loadModels();
+  </script>
+
+{% endblock %}
