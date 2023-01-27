@@ -1,3 +1,5 @@
 .env
 db.sqlite3
 service-account-key.json
+*.pyo
+*.pyc
