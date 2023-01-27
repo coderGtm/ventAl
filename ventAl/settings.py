@@ -15,11 +15,13 @@ from django.contrib.messages import constants as messages
 import os
 from dotenv import load_dotenv
 
-load_dotenv()  # take environment variables from .env.
-
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+#Current file dir
+FILE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+load_dotenv(os.path.join(FILE_DIR, ".env"))  # take environment variables from .env.
 
 
 # Quick-start development settings - unsuitable for production
@@ -76,7 +78,7 @@ ROOT_URLCONF = 'ventAl.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ["templates"],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
