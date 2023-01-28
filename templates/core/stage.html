@@ -36,7 +36,7 @@
 
     <h4 class="my-3">Pin: <span class="badge rounded-pill bg-success">{{ album_pin }}</span></h4>
 
-    <h4>Share URL of album: <a id="albumShareURL" href="/album/{{ album_ref_id }}">vental.pythonanywhere.com/album/{{ album_ref_id }}</a><button data-bs-toggle="tooltip" title="Copy to clipboard" class="btn ms-3" onclick="copyToClipboard()"><i class="fa-regular fa-copy"></i></button><button data-bs-toggle="tooltip" title="Share on Whatsapp" class="btn ms-1" onclick="shareOnWA()"><i class="fa-brands fa-whatsapp"></i></button></h4>
+    <h4>Share URL of album: <a id="albumShareURL" href="/album/{{ album_ref_id }}"><br>album/{{ album_ref_id }}</a><button data-bs-toggle="tooltip" title="Copy to clipboard" class="btn ms-3" onclick="copyToClipboard()"><i class="fa-regular fa-copy"></i></button><button data-bs-toggle="tooltip" title="Share on Whatsapp" class="btn ms-1" onclick="shareOnWA()"><i class="fa-brands fa-whatsapp"></i></button></h4>
     
 
     <button class="btn btn-danger mt-5" onclick="deleteAlbum()"><i class="fa-solid fa-trash px-2"></i>Delete Album</button>
